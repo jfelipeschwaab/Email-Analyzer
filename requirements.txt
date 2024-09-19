@@ -2,3 +2,4 @@ torch
 transformers
 pandas
 imaplib2
+python-dotenv

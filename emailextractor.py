@@ -2,14 +2,17 @@ import imaplib
 import email
 from email.header import decode_header
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 
-username = "joaofsp.games@gmail.com"
-password = "zucl fxyr gvud ctah"
-imap_server = "imap.gmail.com"
+load_dotenv()
+
+username = os.getenv("EMAIL_USER")
+password = os.getenv("EMAIL_PASS")
+imap_server = os.getenv("IMAP_SERVER")
 
 mail = imaplib.IMAP4_SSL(imap_server)
 mail.login(username, password)
-
 mail.select("inbox")
 
 today = datetime.now().strftime("%d-%b-%Y")
@@ -57,8 +60,6 @@ print(emails_content)
 
 mail.logout()
 
-
-
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
 
@@ -80,10 +81,7 @@ for email in emails_content:
     print(f"Classificação: {classify_email(body)}")
     print("-------------------------------------------------")
 
-
-
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-import torch
 
 gpt2_model_name = "gpt2"
 gpt2_tokenizer = GPT2Tokenizer.from_pretrained(gpt2_model_name)
@@ -91,25 +89,18 @@ gpt2_model = GPT2LMHeadModel.from_pretrained(gpt2_model_name)
 gpt2_model.config.pad_token_id = gpt2_model.config.eos_token_id
 
 def summarize_email(text):
-    # Tokenizar o texto de entrada
     input_ids = gpt2_tokenizer.encode(text, return_tensors='pt', max_length=512, truncation=True)
-    
-    # Garantir que input_ids é um tensor PyTorch
     input_ids = torch.tensor(input_ids) if not isinstance(input_ids, torch.Tensor) else input_ids
-
-    # Criar a attention mask e garantir que seja um tensor de inteiros
     attention_mask = (input_ids != gpt2_model.config.pad_token_id).to(dtype=torch.long)
 
-    # Gerar o resumo
     summary_ids = gpt2_model.generate(
         input_ids, 
         attention_mask=attention_mask,
-        max_new_tokens=100,  # Use max_new_tokens para especificar o comprimento do resumo
+        max_new_tokens=100, 
         num_return_sequences=1, 
         no_repeat_ngram_size=2
     )
     
-    # Decodificar o resumo gerado
     summary = gpt2_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
     return summary
 
@@ -120,8 +111,6 @@ for email in emails_content:
     print(f"Classificação: {classify_email(body)}")
     print(f"Resumo: {summarize_email(body)}")
     print("-------------------------------------------------")
-
-
 
 import pandas as pd
 
@@ -137,6 +126,5 @@ def create_report(emails):
     df = pd.DataFrame(data)
     df.to_csv("email_report.csv", index=False)
     print("Relatório salvo como 'email_report.csv'")
-    
-    
+
 create_report(emails_content)
